@@ -65,3 +65,8 @@ curl --location 'https://second-brain-web.onrender.com/api/auth/register' \
   "email": "john.do1e1@example.com",
   "password": "@Invimatic@123"
 }'
+---
+### 👨‍💻 Author
+Rushikesh Jagtap
+Frontend Developer
+GitHub: @rushij27
