@@ -51,10 +51,10 @@ function DeveloperCard({ developer }: { developer: Developer }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow w-full h-[140px] flex flex-col"
+      className="p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow w-full flex flex-col"
     >
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
+        <div className="h-auto w-10 rounded-full overflow-hidden flex-shrink-0">
           <img
             src={developer.avatarUrl || "/placeholder.svg"}
             alt={developer.name}
@@ -66,18 +66,6 @@ function DeveloperCard({ developer }: { developer: Developer }) {
           <p className="text-xs text-muted-foreground truncate">{developer.headline}</p>
         </div>
       </div>
-      {/* <div className="mt-2">
-        <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs">
-          {developer.designation}
-        </Badge>
-      </div> */}
-      {developer.projectAssignment && (
-        <div className="mt-2">
-          <Badge variant="outline" className="text-xs bg-green-50 text-green-800 border-green-200">
-            {developer.projectAssignment}
-          </Badge>
-        </div>
-      )}
     </Card>
   )
 }
@@ -381,14 +369,6 @@ export default function DeveloperBoard() {
                   <p className="text-xs text-muted-foreground truncate">{activeDeveloper.headline}</p>
                 </div>
               </div>
-              {/* <div className="mt-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 inline-block">
-                {activeDeveloper.designation}
-              </div> */}
-              {activeDeveloper.projectAssignment && (
-                <div className="mt-2 text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">
-                  {activeDeveloper.projectAssignment}
-                </div>
-              )}
             </Card>
           )}
         </DragOverlay>
