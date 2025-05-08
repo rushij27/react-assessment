@@ -1,187 +1,364 @@
 "use client"
 
 import { useState } from "react"
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd"
+import {
+  DndContext,
+  type DragEndEvent,
+  type DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable
+} from "@dnd-kit/core"
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { restrictToWindowEdges } from "@dnd-kit/modifiers"
+import { CSS } from "@dnd-kit/utilities"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 
-// Sample user data
-const initialUsers = [
-  {
-    id: "user-1",
-    name: "John Doe",
-    designation: "Frontend Developer",
-    avatar: "https://ui-avatars.com/api/?name=John+Doe&background=random",
-  },
-  {
-    id: "user-2",
-    name: "Jane Smith",
-    designation: "UX Designer",
-    avatar: "https://ui-avatars.com/api/?name=Jane+Smith&background=random",
-  },
-  {
-    id: "user-3",
-    name: "Robert Johnson",
-    designation: "Backend Developer",
-    avatar: "https://ui-avatars.com/api/?name=Robert+Johnson&background=random",
-  },
-  {
-    id: "user-4",
-    name: "Emily Davis",
-    designation: "Project Manager",
-    avatar: "https://ui-avatars.com/api/?name=Emily+Davis&background=random",
-  },
-  {
-    id: "user-5",
-    name: "Michael Wilson",
-    designation: "DevOps Engineer",
-    avatar: "https://ui-avatars.com/api/?name=Michael+Wilson&background=random",
-  },
-]
-
-// Initial column data
-const initialColumns = {
-  "top-row": {
-    id: "top-row",
-    title: "Available Users",
-    userIds: ["user-1", "user-2", "user-3", "user-4", "user-5"],
-  },
-  "project-1": {
-    id: "project-1",
-    title: "Project 1",
-    userIds: [],
-  },
-  "project-2": {
-    id: "project-2",
-    title: "Project 2",
-    userIds: [],
-  },
-  "project-3": {
-    id: "project-3",
-    title: "Project 3",
-    userIds: [],
-  },
+// Types
+export type Developer = {
+  id: string
+  name: string
+  headline: string
+  avatarUrl: string
+  skills: string[]
+  designation: string | null
+  projectAssignment: string | null
 }
 
-// Column order
-const initialColumnOrder = ["top-row", "project-1", "project-2", "project-3"]
+export type Column = {
+  id: string
+  title: string
+  developers: Developer[]
+}
 
-export default function DragAndDropPage() {
-  const [users] = useState(initialUsers)
-  const [columns, setColumns] = useState(initialColumns)
-  const [columnOrder] = useState(initialColumnOrder)
+// DeveloperCard Component 
+function DeveloperCard({ developer }: { developer: Developer }) {
+  // Make the card draggable
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: developer.id,
+  })
+  
+  const style = {
+    transform: CSS.Translate.toString(transform),
+  }
+  
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full overflow-hidden">
+          <img
+            src={developer.avatarUrl || "/placeholder.svg"}
+            alt={developer.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
+        <div>
+          <h3 className="font-semibold">{developer.name}</h3>
+          <p className="text-sm text-muted-foreground">{developer.headline}</p>
+        </div>
+      </div>
+      {developer.designation && (
+        <div className="mt-2">
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+            {developer.designation}
+          </Badge>
+        </div>
+      )}
+      <div className="mt-2 flex flex-wrap gap-1">
+        {developer.skills.slice(0, 2).map((skill, index) => (
+          <Badge key={index} variant="outline" className="text-xs">
+            {skill}
+          </Badge>
+        ))}
+        {developer.skills.length > 2 && (
+          <Badge variant="outline" className="text-xs">
+            +{developer.skills.length - 2}
+          </Badge>
+        )}
+      </div>
+    </Card>
+  )
+}
 
-  const onDragEnd = (result: any) => {
-    const { destination, source, draggableId } = result
+// TaskContainer Component
+function TaskContainer({ column }: { column: Column }) {
+  // Make the column droppable
+  const { setNodeRef } = useDroppable({
+    id: column.id,
+  })
+  
+  return (
+    <Card className="h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-center">{column.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div ref={setNodeRef} className="min-h-[300px] rounded-md p-2 bg-slate-50">
+          <SortableContext items={column.developers.map((dev) => dev.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {column.developers.map((developer) => (
+                <DeveloperCard key={developer.id} developer={developer} />
+              ))}
+            </div>
+          </SortableContext>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
-    // If there's no destination or if the item was dropped back to its original position
-    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
-      return
-    }
+// Main DeveloperBoard Component
+export default function DeveloperBoard() {
+  // Initial developers in the source container
+  const [sourceDevelopers, setSourceDevelopers] = useState<Developer[]>([
+    {
+      id: "dev-1",
+      name: "Alex Johnson",
+      headline: "Frontend Developer",
+      avatarUrl: "/placeholder.svg?height=40&width=40",
+      skills: ["React", "TypeScript", "CSS"],
+      designation: "Frontend Developer",
+      projectAssignment: null,
+    },
+    {
+      id: "dev-2",
+      name: "Sarah Chen",
+      headline: "Full Stack Developer",
+      avatarUrl: "/placeholder.svg?height=40&width=40",
+      skills: ["Node.js", "React", "MongoDB"],
+      designation: "Full Stack Developer",
+      projectAssignment: null,
+    },
+    {
+      id: "dev-3",
+      name: "Miguel Rodriguez",
+      headline: "Backend Developer",
+      avatarUrl: "/placeholder.svg?height=40&width=40",
+      skills: ["Java", "Spring", "AWS"],
+      designation: "Backend Developer",
+      projectAssignment: null,
+    },
+    {
+      id: "dev-4",
+      name: "Priya Patel",
+      headline: "Mobile Developer",
+      avatarUrl: "/placeholder.svg?height=40&width=40",
+      skills: ["Flutter", "Dart", "Firebase"],
+      designation: "Mobile Developer",
+      projectAssignment: null,
+    },
+    {
+      id: "dev-5",
+      name: "David Kim",
+      headline: "DevOps Engineer",
+      avatarUrl: "/placeholder.svg?height=40&width=40",
+      skills: ["Docker", "Kubernetes", "CI/CD"],
+      designation: "DevOps Engineer",
+      projectAssignment: null,
+    },
+    {
+      id: "dev-6",
+      name: "Emma Wilson",
+      headline: "UI/UX Designer",
+      avatarUrl: "/placeholder.svg?height=40&width=40",
+      skills: ["Figma", "React", "CSS"],
+      designation: "UI/UX Designer",
+      projectAssignment: null,
+    },
+  ])
 
-    // Get source and destination columns
-    const sourceColumn = columns[source.droppableId]
-    const destinationColumn = columns[destination.droppableId]
+  // Project columns for developer assignment
+  const [columns, setColumns] = useState<Column[]>([
+    { id: "column-1", title: "Project 1", developers: [] },
+    { id: "column-2", title: "Project 2", developers: [] },
+    { id: "column-3", title: "Project 3", developers: [] },
+  ])
 
-    // If moving within the same column
-    if (sourceColumn.id === destinationColumn.id) {
-      const newUserIds = Array.from(sourceColumn.userIds)
-      newUserIds.splice(source.index, 1)
-      newUserIds.splice(destination.index, 0, draggableId)
+  // Track the active developer being dragged
+  const [activeDeveloper, setActiveDeveloper] = useState<Developer | null>(null)
 
-      const newColumn = {
-        ...sourceColumn,
-        userIds: newUserIds,
-      }
-
-      setColumns({
-        ...columns,
-        [newColumn.id]: newColumn,
-      })
-      return
-    }
-
-    // Moving from one column to another
-    const sourceUserIds = Array.from(sourceColumn.userIds)
-    sourceUserIds.splice(source.index, 1)
-    const newSourceColumn = {
-      ...sourceColumn,
-      userIds: sourceUserIds,
-    }
-
-    const destinationUserIds = Array.from(destinationColumn.userIds)
-    destinationUserIds.splice(destination.index, 0, draggableId)
-    const newDestinationColumn = {
-      ...destinationColumn,
-      userIds: destinationUserIds,
-    }
-
-    setColumns({
-      ...columns,
-      [newSourceColumn.id]: newSourceColumn,
-      [newDestinationColumn.id]: newDestinationColumn,
+  // Configure sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
     })
+  )
+
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const devId = active.id as string
+
+    // Find the developer in either source or columns
+    let developer: Developer | undefined
+
+    // Check source container first
+    developer = sourceDevelopers.find((d) => d.id === devId)
+
+    // If not in source, check columns
+    if (!developer) {
+      for (const column of columns) {
+        developer = column.developers.find((d) => d.id === devId)
+        if (developer) break
+      }
+    }
+
+    if (developer) {
+      setActiveDeveloper(developer)
+    }
   }
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Drag and Drop Board</h1>
-      <p className="text-muted-foreground">Drag user cards from the top row into project columns below</p>
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="space-y-6">
-          {/* Top row with user cards */}
-          {columnOrder.map((columnId) => {
-            const column = columns[columnId]
-            const columnUsers = column.userIds.map((userId) => users.find((user) => user.id === userId))
+    if (!over || !active) {
+      setActiveDeveloper(null)
+      return
+    }
 
-            return (
-              <div key={column.id} className="space-y-4">
-                <h2 className="text-xl font-semibold">{column.title}</h2>
-                <Droppable droppableId={column.id} direction="horizontal">
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`grid grid-cols-1 gap-4 rounded-lg border p-4 md:grid-cols-2 lg:grid-cols-3 ${
-                        column.id === "top-row" ? "bg-muted/50" : "bg-card"
-                      }`}
-                      style={{ minHeight: "120px" }}
-                    >
-                      {columnUsers.map(
-                        (user, index) =>
-                          user && (
-                            <Draggable key={user.id} draggableId={user.id} index={index}>
-                              {(provided) => (
-                                <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                                  <Card className="h-full">
-                                    <CardHeader className="p-4">
-                                      <CardTitle className="text-sm">{user.name}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="flex items-center space-x-4 p-4 pt-0">
-                                      <Avatar>
-                                        <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                        <p className="text-xs text-muted-foreground">{user.designation}</p>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                </div>
-                              )}
-                            </Draggable>
-                          ),
-                      )}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </div>
+    const devId = active.id as string
+    const overId = over.id as string
+
+    // Handle dropping a developer from source to a column
+    if (overId.startsWith("column")) {
+      const sourceDev = sourceDevelopers.find((dev) => dev.id === devId)
+      const targetColumn = columns.find((col) => col.id === overId)
+
+      if (sourceDev && targetColumn) {
+        // Update designation based on column
+        const updatedDev = {
+          ...sourceDev,
+          designation: targetColumn.title,
+        }
+
+        // Remove from source
+        setSourceDevelopers((prev) => prev.filter((dev) => dev.id !== devId))
+
+        // Add to column
+        setColumns((prev) =>
+          prev.map((col) => (col.id === overId ? { ...col, developers: [...col.developers, updatedDev] } : col))
+        )
+      } else {
+        // Handle moving between columns
+        let sourceColumnId: string | null = null
+        let devToMove: Developer | null = null
+
+        // Find which column has the developer
+        columns.forEach((col) => {
+          const dev = col.developers.find((d) => d.id === devId)
+          if (dev) {
+            sourceColumnId = col.id
+            devToMove = dev
+          }
+        })
+
+        if (sourceColumnId && devToMove && sourceColumnId !== overId) {
+          const targetColumn = columns.find((col) => col.id === overId)
+
+          if (targetColumn) {
+            // Update designation based on new column
+            const updatedDev = {
+              ...devToMove,
+              designation: targetColumn.title,
+            }
+
+            // Remove from source column
+            setColumns((prev) =>
+              prev.map((col) =>
+                col.id === sourceColumnId ? { ...col, developers: col.developers.filter((d) => d.id !== devId) } : col
+              )
             )
-          })}
+
+            // Add to target column
+            setColumns((prev) =>
+              prev.map((col) => (col.id === overId ? { ...col, developers: [...col.developers, updatedDev] } : col))
+            )
+          }
+        }
+      }
+    }
+
+    setActiveDeveloper(null)
+  }
+
+  // Make the source container droppable
+  const { setNodeRef: setSourceRef } = useDroppable({
+    id: "source-container",
+  })
+
+  return (
+    <main className="container mx-auto p-4 min-h-screen">
+      <h1 className="text-3xl font-bold mb-8 text-center">Developer Team Organization</h1>
+
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToWindowEdges]}
+      >
+        <div className="space-y-8">
+          {/* Source container */}
+          <div ref={setSourceRef}>
+            <Card className="bg-slate-50">
+              <CardHeader>
+                <CardTitle>Available Developers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {sourceDevelopers.map((developer) => (
+                    <DeveloperCard key={developer.id} developer={developer} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {columns.map((column) => (
+              <TaskContainer key={column.id} column={column} />
+            ))}
+          </div>
         </div>
-      </DragDropContext>
-    </div>
+
+        <DragOverlay>
+          {activeDeveloper && (
+            <Card className="w-[250px] p-4 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full overflow-hidden">
+                  <img
+                    src={activeDeveloper.avatarUrl || "/placeholder.svg"}
+                    alt={activeDeveloper.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{activeDeveloper.name}</h3>
+                  <p className="text-sm text-muted-foreground">{activeDeveloper.headline}</p>
+                </div>
+              </div>
+              {activeDeveloper.designation && (
+                <div className="mt-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 inline-block">
+                  {activeDeveloper.designation}
+                </div>
+              )}
+            </Card>
+          )}
+        </DragOverlay>
+      </DndContext>
+    </main>
   )
 }
