@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/lib/auth-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -21,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 export function DashboardSidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { state } = useSidebar()
 
   const routes = [
     {
@@ -41,19 +43,25 @@ export function DashboardSidebar() {
   ]
 
   return (
-    <Sidebar>
-      <SidebarHeader className="flex items-center justify-between p-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-xl font-bold">Dashboard</span>
+    <Sidebar variant="inset" collapsible="icon">
+      <SidebarHeader className="flex items-center justify-start py-5">
+        <div className="flex justify-start items-center space-x-2">
+          <SidebarTrigger />
+          <span className={`text-xl font-bold ${state === "collapsed" ? "hidden" : ""}`}>
+            Dashboard
+          </span>
         </div>
-        <SidebarTrigger />
       </SidebarHeader>
       <SidebarSeparator />
       <SidebarContent>
         <SidebarMenu>
           {routes.map((route) => (
             <SidebarMenuItem key={route.href}>
-              <SidebarMenuButton asChild isActive={pathname === route.href} tooltip={route.title}>
+              <SidebarMenuButton 
+                asChild 
+                isActive={pathname === route.href} 
+                tooltip={state === "collapsed" ? route.title : undefined}
+              >
                 <Link href={route.href}>
                   <route.icon className="h-5 w-5" />
                   <span>{route.title}</span>
@@ -67,7 +75,7 @@ export function DashboardSidebar() {
         {user && (
           <>
             <SidebarSeparator />
-            <div className="flex items-center justify-between p-4">
+            <div className={`flex items-center justify-between p-4 ${state === "collapsed" ? "hidden" : ""}`}>
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage

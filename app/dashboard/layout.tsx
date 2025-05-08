@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
@@ -18,7 +17,6 @@ export default function DashboardLayout({
   const router = useRouter()
 
   useEffect(() => {
-    // Redirect to login if not authenticated
     if (!isLoading && !user) {
       router.push("/auth/login")
     }
@@ -27,7 +25,7 @@ export default function DashboardLayout({
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -37,7 +35,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen">
         <DashboardSidebar />
         <div className="flex-1">

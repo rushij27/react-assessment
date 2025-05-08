@@ -67,25 +67,18 @@ function DeveloperCard({ developer }: { developer: Developer }) {
           <p className="text-sm text-muted-foreground">{developer.headline}</p>
         </div>
       </div>
-      {developer.designation && (
+      <div className="mt-2">
+        <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+          {developer.designation}
+        </Badge>
+      </div>
+      {developer.projectAssignment && (
         <div className="mt-2">
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-            {developer.designation}
+          <Badge variant="outline" className="text-xs bg-green-50 text-green-800 border-green-200">
+            {developer.projectAssignment}
           </Badge>
         </div>
       )}
-      <div className="mt-2 flex flex-wrap gap-1">
-        {developer.skills.slice(0, 2).map((skill, index) => (
-          <Badge key={index} variant="outline" className="text-xs">
-            {skill}
-          </Badge>
-        ))}
-        {developer.skills.length > 2 && (
-          <Badge variant="outline" className="text-xs">
-            +{developer.skills.length - 2}
-          </Badge>
-        )}
-      </div>
     </Card>
   )
 }
@@ -98,17 +91,25 @@ function TaskContainer({ column }: { column: Column }) {
   })
   
   return (
-    <Card className="h-full">
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-center">{column.title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div ref={setNodeRef} className="min-h-[300px] rounded-md p-2 bg-slate-50">
+      <CardContent className="flex-grow">
+        <div 
+          ref={setNodeRef} 
+          className="min-h-[300px] h-full rounded-md p-2 bg-slate-50 flex flex-col"
+        >
           <SortableContext items={column.developers.map((dev) => dev.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
+            <div className="space-y-2 flex-grow">
               {column.developers.map((developer) => (
                 <DeveloperCard key={developer.id} developer={developer} />
               ))}
+              {column.developers.length === 0 && (
+                <div className="h-full min-h-[150px] flex items-center justify-center border-2 border-dashed border-slate-200 rounded-md">
+                  <p className="text-slate-400">Drop developers here</p>
+                </div>
+              )}
             </div>
           </SortableContext>
         </div>
@@ -238,10 +239,10 @@ export default function DeveloperBoard() {
       const targetColumn = columns.find((col) => col.id === overId)
 
       if (sourceDev && targetColumn) {
-        // Update designation based on column
+        // Update project assignment based on column
         const updatedDev = {
           ...sourceDev,
-          designation: targetColumn.title,
+          projectAssignment: targetColumn.title,
         }
 
         // Remove from source
@@ -269,10 +270,10 @@ export default function DeveloperBoard() {
           const targetColumn = columns.find((col) => col.id === overId)
 
           if (targetColumn) {
-            // Update designation based on new column
+            // Update project assignment based on new column
             const updatedDev = {
               ...devToMove,
-              designation: targetColumn.title,
+              projectAssignment: targetColumn.title,
             }
 
             // Remove from source column
@@ -300,8 +301,8 @@ export default function DeveloperBoard() {
   })
 
   return (
-    <main className="container mx-auto p-4 min-h-screen">
-      <h1 className="text-3xl font-bold mb-8 text-center">Developer Team Organization</h1>
+    <main className="w-full min-h-screen p-4">
+      <h1 className="text-3xl font-bold mb-8 text-center">Project Team Assignment</h1>
 
       <DndContext
         sensors={sensors}
@@ -309,25 +310,30 @@ export default function DeveloperBoard() {
         onDragEnd={handleDragEnd}
         modifiers={[restrictToWindowEdges]}
       >
-        <div className="space-y-8">
+        <div className="space-y-8 max-w-full mx-auto">
           {/* Source container */}
           <div ref={setSourceRef}>
-            <Card className="bg-slate-50">
-              <CardHeader>
-                <CardTitle>Available Developers</CardTitle>
+            <Card className="bg-slate-50 w-full">
+              <CardHeader className="pb-2">
+                <CardTitle>Developer Pool</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {sourceDevelopers.map((developer) => (
                     <DeveloperCard key={developer.id} developer={developer} />
                   ))}
                 </div>
+                {sourceDevelopers.length === 0 && (
+                  <div className="text-center py-4 text-gray-500">
+                    All developers have been assigned to projects
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             {columns.map((column) => (
               <TaskContainer key={column.id} column={column} />
             ))}
@@ -350,9 +356,12 @@ export default function DeveloperBoard() {
                   <p className="text-sm text-muted-foreground">{activeDeveloper.headline}</p>
                 </div>
               </div>
-              {activeDeveloper.designation && (
-                <div className="mt-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 inline-block">
-                  {activeDeveloper.designation}
+              <div className="mt-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 inline-block">
+                {activeDeveloper.designation}
+              </div>
+              {activeDeveloper.projectAssignment && (
+                <div className="mt-2 text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">
+                  {activeDeveloper.projectAssignment}
                 </div>
               )}
             </Card>
