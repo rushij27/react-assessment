@@ -65,6 +65,26 @@ curl --location 'https://second-brain-web.onrender.com/api/auth/register' \
   "email": "john.do1e1@example.com",
   "password": "@Invimatic@123"
 }'
+```
+---
+### Login
+```bash
+curl --location 'https://second-brain-web.onrender.com/api/auth/login' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "email": "john.do1e1@example.com",
+  "password": "@Invimatic@123"
+}'
+```
+---
+### Forgot Password
+```bash
+curl --location 'https://second-brain-web.onrender.com/api/auth/forgot-password' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "email": "john.doe@example.com"
+}'
+```
 ---
 ### 👨‍💻 Author
 Rushikesh Jagtap
