@@ -25,8 +25,7 @@ export type Developer = {
   headline: string
   avatarUrl: string
   skills: string[]
-  designation: string | null
-  projectAssignment: string | null
+  projectAssignment?: string
 }
 
 export type Column = {
@@ -52,26 +51,26 @@ function DeveloperCard({ developer }: { developer: Developer }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+      className="p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow w-full h-[140px] flex flex-col"
     >
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full overflow-hidden">
+        <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
           <img
             src={developer.avatarUrl || "/placeholder.svg"}
             alt={developer.name}
             className="h-full w-full object-cover"
           />
         </div>
-        <div>
-          <h3 className="font-semibold">{developer.name}</h3>
-          <p className="text-sm text-muted-foreground">{developer.headline}</p>
+        <div className="overflow-hidden">
+          <h3 className="font-semibold text-sm truncate">{developer.name}</h3>
+          <p className="text-xs text-muted-foreground truncate">{developer.headline}</p>
         </div>
       </div>
-      <div className="mt-2">
-        <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+      {/* <div className="mt-2">
+        <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs">
           {developer.designation}
         </Badge>
-      </div>
+      </div> */}
       {developer.projectAssignment && (
         <div className="mt-2">
           <Badge variant="outline" className="text-xs bg-green-50 text-green-800 border-green-200">
@@ -126,55 +125,49 @@ export default function DeveloperBoard() {
       id: "dev-1",
       name: "Alex Johnson",
       headline: "Frontend Developer",
-      avatarUrl: "/placeholder.svg?height=40&width=40",
+      avatarUrl: "https://randomuser.me/api/portraits/men/32.jpg",
       skills: ["React", "TypeScript", "CSS"],
-      designation: "Frontend Developer",
-      projectAssignment: null,
+      projectAssignment: undefined,
     },
     {
       id: "dev-2",
       name: "Sarah Chen",
       headline: "Full Stack Developer",
-      avatarUrl: "/placeholder.svg?height=40&width=40",
+      avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
       skills: ["Node.js", "React", "MongoDB"],
-      designation: "Full Stack Developer",
-      projectAssignment: null,
+      projectAssignment: undefined,
     },
     {
       id: "dev-3",
       name: "Miguel Rodriguez",
       headline: "Backend Developer",
-      avatarUrl: "/placeholder.svg?height=40&width=40",
+      avatarUrl: "https://randomuser.me/api/portraits/men/46.jpg",
       skills: ["Java", "Spring", "AWS"],
-      designation: "Backend Developer",
-      projectAssignment: null,
+      projectAssignment: undefined,
     },
     {
       id: "dev-4",
       name: "Priya Patel",
       headline: "Mobile Developer",
-      avatarUrl: "/placeholder.svg?height=40&width=40",
+      avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
       skills: ["Flutter", "Dart", "Firebase"],
-      designation: "Mobile Developer",
-      projectAssignment: null,
+      projectAssignment: undefined,
     },
     {
       id: "dev-5",
       name: "David Kim",
       headline: "DevOps Engineer",
-      avatarUrl: "/placeholder.svg?height=40&width=40",
+      avatarUrl: "https://randomuser.me/api/portraits/men/22.jpg",
       skills: ["Docker", "Kubernetes", "CI/CD"],
-      designation: "DevOps Engineer",
-      projectAssignment: null,
+      projectAssignment: undefined,
     },
     {
       id: "dev-6",
       name: "Emma Wilson",
       headline: "UI/UX Designer",
-      avatarUrl: "/placeholder.svg?height=40&width=40",
+      avatarUrl: "https://randomuser.me/api/portraits/women/24.jpg",
       skills: ["Figma", "React", "CSS"],
-      designation: "UI/UX Designer",
-      projectAssignment: null,
+      projectAssignment: undefined,
     },
   ])
 
@@ -192,7 +185,7 @@ export default function DeveloperBoard() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5, // Reduced distance for easier drag activation
       },
     })
   )
@@ -233,7 +226,7 @@ export default function DeveloperBoard() {
     const devId = active.id as string
     const overId = over.id as string
 
-    // Handle dropping a developer from source to a column
+    // Handle dropping a developer into a column
     if (overId.startsWith("column")) {
       const sourceDev = sourceDevelopers.find((dev) => dev.id === devId)
       const targetColumn = columns.find((col) => col.id === overId)
@@ -290,6 +283,38 @@ export default function DeveloperBoard() {
           }
         }
       }
+    } 
+    // Handle dropping back to source container
+    else if (overId === "source-container" || overId === "source-container-id") {
+      // Find which column has the developer
+      let sourceColumnId: string | null = null
+      let devToMove: Developer | null = null
+
+      columns.forEach((col) => {
+        const dev = col.developers.find((d) => d.id === devId)
+        if (dev) {
+          sourceColumnId = col.id
+          devToMove = dev
+        }
+      })
+
+      if (sourceColumnId && devToMove) {
+        // Update project assignment to null when moving back to source
+        const updatedDev = {
+          ...devToMove,
+          projectAssignment: null,
+        }
+
+        // Remove from source column
+        setColumns((prev) =>
+          prev.map((col) =>
+            col.id === sourceColumnId ? { ...col, developers: col.developers.filter((d) => d.id !== devId) } : col
+          )
+        )
+
+        // Add back to source container
+        setSourceDevelopers((prev) => [...prev, updatedDev])
+      }
     }
 
     setActiveDeveloper(null)
@@ -297,7 +322,7 @@ export default function DeveloperBoard() {
 
   // Make the source container droppable
   const { setNodeRef: setSourceRef } = useDroppable({
-    id: "source-container",
+    id: "source-container-id",
   })
 
   return (
@@ -312,7 +337,7 @@ export default function DeveloperBoard() {
       >
         <div className="space-y-8 max-w-full mx-auto">
           {/* Source container */}
-          <div ref={setSourceRef}>
+          <div ref={setSourceRef} className="w-full" id="source-container">
             <Card className="bg-slate-50 w-full">
               <CardHeader className="pb-2">
                 <CardTitle>Developer Pool</CardTitle>
@@ -322,12 +347,12 @@ export default function DeveloperBoard() {
                   {sourceDevelopers.map((developer) => (
                     <DeveloperCard key={developer.id} developer={developer} />
                   ))}
+                  {sourceDevelopers.length === 0 && (
+                    <div className="col-span-full h-[140px] flex items-center justify-center border-2 border-dashed border-slate-200 rounded-md">
+                      <p className="text-slate-400">Drop developers here to return to pool</p>
+                    </div>
+                  )}
                 </div>
-                {sourceDevelopers.length === 0 && (
-                  <div className="text-center py-4 text-gray-500">
-                    All developers have been assigned to projects
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -342,23 +367,23 @@ export default function DeveloperBoard() {
 
         <DragOverlay>
           {activeDeveloper && (
-            <Card className="w-[250px] p-4 shadow-lg">
+            <Card className="w-[250px] p-4 shadow-lg h-[140px]">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full overflow-hidden">
+                <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
                   <img
                     src={activeDeveloper.avatarUrl || "/placeholder.svg"}
                     alt={activeDeveloper.name}
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div>
-                  <h3 className="font-semibold">{activeDeveloper.name}</h3>
-                  <p className="text-sm text-muted-foreground">{activeDeveloper.headline}</p>
+                <div className="overflow-hidden">
+                  <h3 className="font-semibold text-sm truncate">{activeDeveloper.name}</h3>
+                  <p className="text-xs text-muted-foreground truncate">{activeDeveloper.headline}</p>
                 </div>
               </div>
-              <div className="mt-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 inline-block">
+              {/* <div className="mt-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 inline-block">
                 {activeDeveloper.designation}
-              </div>
+              </div> */}
               {activeDeveloper.projectAssignment && (
                 <div className="mt-2 text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">
                   {activeDeveloper.projectAssignment}

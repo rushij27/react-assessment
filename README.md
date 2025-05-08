@@ -57,36 +57,82 @@ Use the following endpoints to integrate authentication features:
 
 ### Register
 ```bash
-curl --location 'https://second-brain-web.onrender.com/api/auth/register' \
---header 'Content-Type: application/json' \
---data-raw '{
+curl --location 'https://second-brain-web.onrender.com/api/auth/register' --header 'Content-Type: application/json' --data-raw '{
   "firstName": "John",
   "lastName": "Doe",
   "email": "john.do1e1@example.com",
   "password": "@Invimatic@123"
 }'
 ```
----
+
 ### Login
 ```bash
-curl --location 'https://second-brain-web.onrender.com/api/auth/login' \
---header 'Content-Type: application/json' \
---data-raw '{
+curl --location 'https://second-brain-web.onrender.com/api/auth/login' --header 'Content-Type: application/json' --data-raw '{
   "email": "john.do1e1@example.com",
   "password": "@Invimatic@123"
 }'
 ```
----
+
 ### Forgot Password
 ```bash
-curl --location 'https://second-brain-web.onrender.com/api/auth/forgot-password' \
---header 'Content-Type: application/json' \
---data-raw '{
+curl --location 'https://second-brain-web.onrender.com/api/auth/forgot-password' --header 'Content-Type: application/json' --data-raw '{
   "email": "john.doe@example.com"
 }'
 ```
+
 ---
-### 👨‍💻 Author
-Rushikesh Jagtap
-Frontend Developer
-GitHub: @rushij27
+
+## 🛠️ Getting Started
+
+### 1. Clone the Repo
+
+```bash
+git clone https://github.com/your-username/react-assessment.git
+cd react-assessment
+```
+
+### 2. Install Dependencies
+
+```bash
+yarn install
+# or
+npm install
+```
+
+### 3. Start the Dev Server
+
+```bash
+yarn dev
+# or
+npm run dev
+```
+
+---
+
+## 🧪 Testing
+
+Basic test coverage for component rendering and hook logic is recommended. You can integrate:
+- React Testing Library
+- Jest
+
+---
+
+## 📌 Improvements
+
+- Sidebar toggle behavior enhanced for better UX (icon-only collapse)
+- DnD columns positioned below Top Row (side-by-side)
+- Added third custom hook for sidebar toggle management
+
+---
+
+## 👨‍💻 Author
+
+**Rushikesh Jagtap**  
+Frontend Developer  
+GitHub: [@rushij27](https://github.com/rushij27)
+
+---
+
+## 📃 License
+
+This project is licensed under the MIT License.
