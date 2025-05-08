@@ -5,6 +5,7 @@ import { useInfiniteQuery } from "@tanstack/react-query"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 // Function to fetch dog images
 const fetchDogImages = async ({ pageParam = 1 }) => {
@@ -55,12 +56,14 @@ export default function InfiniteScrollPage() {
 
   if (status === "pending") {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Infinite Scroll</h1>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
+      <div className="container mx-auto space-y-6 p-4">
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+          Infinite Scroll
+        </h1>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <Card key={index} className="overflow-hidden transition-shadow hover:shadow-lg">
+              <CardContent className="p-3">
                 <Skeleton className="h-[200px] w-full rounded-md" />
               </CardContent>
             </Card>
@@ -72,41 +75,64 @@ export default function InfiniteScrollPage() {
 
   if (status === "error") {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Infinite Scroll</h1>
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          <p>Error loading images. Please try again later.</p>
+      <div className="container mx-auto space-y-6 p-4">
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+          Infinite Scroll
+        </h1>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          <p className="text-lg">Error loading images. Please try again later.</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Infinite Scroll</h1>
-      <p className="text-muted-foreground">Scroll down to load more dog images</p>
+    <div className="container mx-auto space-y-8 p-4">
+      <div className="space-y-4">
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+          Infinite Scroll
+        </h1>
+        <p className="text-xl text-muted-foreground">
+          Scroll down to load more dog images
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-4",
+          "sm:grid-cols-2",
+          "lg:grid-cols-3",
+          "xl:grid-cols-4"
+        )}
+      >
         {allImages.map((imageUrl, index) => (
-          <Card key={`${imageUrl}-${index}`}>
-            <CardContent className="p-4">
-              <img
-                src={imageUrl || "/placeholder.svg"}
-                alt={`Dog ${index + 1}`}
-                className="h-[200px] w-full rounded-md object-cover"
-                loading="lazy"
-              />
+          <Card 
+            key={`${imageUrl}-${index}`}
+            className="group overflow-hidden transition-all duration-300 hover:shadow-lg"
+          >
+            <CardContent className="p-3">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-md">
+                <img
+                  src={imageUrl || "/placeholder.svg"}
+                  alt={`Dog ${index + 1}`}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Loading indicator and intersection observer target */}
-      <div ref={loadMoreRef} className="flex justify-center py-4">
+      <div 
+        ref={loadMoreRef} 
+        className="flex justify-center py-6"
+      >
         {isFetchingNextPage && (
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Loading more...</span>
+          <div className="flex items-center space-x-3 text-lg">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading more images...</span>
           </div>
         )}
       </div>
